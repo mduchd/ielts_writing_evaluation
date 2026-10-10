@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #09090b;
+    --panel: #ffffff;
+    --panel-secondary: #f8f9fa;
+    --border: #cbd5e1; /* Slate-300: crisp, clear 1px borders */
+    --muted: #f1f5f9;
+    --muted-foreground: #0f172a; /* Slate-900: sharp contrast secondary text */
+  }
+
+  .dark {
+    --background: #09090b;
+    --foreground: #ffffff;
+    --panel: #111114;
+    --panel-secondary: #18181c;
+    --border: #3f3f46; /* Zinc-700: sharp 1px border in dark mode */
+    --muted: #18181b;
+    --muted-foreground: #f4f4f5; /* Zinc-100: high contrast secondary text */
+  }
+
+  html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    color: var(--foreground);
+    background-color: var(--background);
+    font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Custom crisp high-contrast scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #52525b;
+}
+
+/* Tabular figures for numbers, timer and word counter to prevent jitter */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* High contrast selection */
+::selection {
+  background-color: #09090b;
+  color: #ffffff;
+}
+
+.dark ::selection {
+  background-color: #ffffff;
+  color: #09090b;
+}
