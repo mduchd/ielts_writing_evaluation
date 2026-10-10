@@ -2,27 +2,90 @@ import { NextRequest, NextResponse } from 'next/server';
 import { evaluateEssayWithAI } from '@/lib/evaluator';
 import { Topic } from '@/types/ielts';
 
+const MAX_ESSAY_LENGTH = 30_000;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isTopic(value: unknown): value is Topic {
+  if (!isRecord(value)) return false;
+
+  const hasRequiredText = ['id', 'category', 'title', 'prompt'].every(
+    (field) => typeof value[field] === 'string' && value[field].trim().length > 0
+  );
+  const chartDataIsValid =
+    value.chartDataSummary === undefined ||
+    (Array.isArray(value.chartDataSummary) && value.chartDataSummary.every((item) => typeof item === 'string'));
+
+  return (
+    hasRequiredText &&
+    (value.type === 'task1' || value.type === 'task2') &&
+    typeof value.minWords === 'number' &&
+    Number.isFinite(value.minWords) &&
+    value.minWords > 0 &&
+    typeof value.timeLimitMinutes === 'number' &&
+    Number.isFinite(value.timeLimitMinutes) &&
+    value.timeLimitMinutes > 0 &&
+    (value.chartDescription === undefined || typeof value.chartDescription === 'string') &&
+    chartDataIsValid
+  );
+}
+
 export async function POST(req: NextRequest) {
+  let body: unknown;
+
   try {
-    const body = await req.json();
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Request body must be valid JSON' }, { status: 400 });
+  }
+
+  if (!isRecord(body)) {
+    return NextResponse.json({ error: 'Request body must be an object' }, { status: 400 });
+  }
+
+  try {
     const { essay, topic, timeSpentSeconds, apiKey, provider } = body;
 
-    if (!essay || typeof essay !== 'string') {
+    if (typeof essay !== 'string' || essay.trim().length === 0) {
       return NextResponse.json({ error: 'Essay content is required' }, { status: 400 });
     }
 
-    if (!topic) {
-      return NextResponse.json({ error: 'Topic is required' }, { status: 400 });
+    if (essay.length > MAX_ESSAY_LENGTH) {
+      return NextResponse.json(
+        { error: `Essay content must be ${MAX_ESSAY_LENGTH.toLocaleString()} characters or fewer` },
+        { status: 413 }
+      );
     }
 
-    // Read server-side environment variables if not passed from client
-    const effectiveApiKey = apiKey || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
-    const effectiveProvider = provider || (process.env.GEMINI_API_KEY ? 'gemini' : 'gemini');
+    if (!isTopic(topic)) {
+      return NextResponse.json({ error: 'Topic is invalid' }, { status: 400 });
+    }
+
+    if (provider !== undefined && provider !== 'gemini' && provider !== 'openai') {
+      return NextResponse.json({ error: 'Provider must be gemini or openai' }, { status: 400 });
+    }
+
+    const configuredProvider = process.env.GEMINI_API_KEY
+      ? 'gemini'
+      : process.env.OPENAI_API_KEY
+        ? 'openai'
+        : 'gemini';
+    const effectiveProvider = provider ?? configuredProvider;
+    const clientApiKey = typeof apiKey === 'string' && apiKey.trim() ? apiKey : undefined;
+    const effectiveApiKey = clientApiKey ?? (
+      effectiveProvider === 'openai' ? process.env.OPENAI_API_KEY : process.env.GEMINI_API_KEY
+    );
+    const normalizedTimeSpent =
+      typeof timeSpentSeconds === 'number' && Number.isFinite(timeSpentSeconds)
+        ? Math.max(0, Math.min(timeSpentSeconds, 24 * 60 * 60))
+        : 0;
 
     const result = await evaluateEssayWithAI(
       essay,
-      topic as Topic,
-      timeSpentSeconds || 0,
+      topic,
+      normalizedTimeSpent,
       effectiveApiKey,
       effectiveProvider
     );
@@ -30,10 +93,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
   } catch (error: unknown) {
     console.error('Error during evaluation:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Internal evaluation failure';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Unable to evaluate this essay right now' }, { status: 500 });
   }
 }

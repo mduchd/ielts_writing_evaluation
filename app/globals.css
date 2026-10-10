@@ -36,6 +36,13 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-hide-sound {
+    display: none;
   }
 }
 

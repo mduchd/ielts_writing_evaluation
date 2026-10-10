@@ -63,9 +63,9 @@ export default function Navbar({
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 transition-colors shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+      <div className="max-w-[1680px] 2xl:max-w-[1760px] mx-auto px-4 sm:px-6 py-3 sm:py-0 sm:h-16 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         {/* Brand & Identity */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:gap-3 shrink-0">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-1 text-xs font-bold tracking-wider bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 rounded">
               IELTS
@@ -78,7 +78,7 @@ export default function Navbar({
           <div className="h-5 w-px bg-zinc-300 dark:bg-zinc-700 hidden md:block" />
 
           {/* Topic Selector */}
-          <div className="relative group">
+          <div className="relative min-w-0 flex-1 sm:flex-none group">
             <select
               value={currentTopic.id}
               onChange={(e) => {
@@ -91,7 +91,7 @@ export default function Navbar({
                 }
               }}
               disabled={isEvaluating}
-              className="text-sm appearance-none bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-md px-3 py-2 pr-8 font-bold text-zinc-950 dark:text-white focus:outline-none focus:border-zinc-950 dark:focus:border-white max-w-[200px] sm:max-w-xs md:max-w-sm truncate cursor-pointer shadow-xs"
+              className="w-full sm:w-auto text-sm appearance-none bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-md px-3 py-2 pr-8 font-bold text-zinc-950 dark:text-white focus:outline-none focus:border-zinc-950 dark:focus:border-white sm:max-w-xs md:max-w-sm truncate cursor-pointer shadow-xs"
             >
               <optgroup label="IELTS Writing Task 2 (Essay)">
                 {PRESET_TOPICS.filter((t) => t.type === 'task2').map((t) => (
@@ -120,14 +120,14 @@ export default function Navbar({
         </div>
 
         {/* Toolbar Controls - Ultra Streamlined Square Icons & Segmented Pills */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex w-full items-center gap-1 sm:w-auto sm:gap-2">
           {/* Font Type Switcher */}
-          <div className="flex items-center h-9 border border-zinc-300 dark:border-zinc-700 rounded-md p-0.5 bg-zinc-100 dark:bg-zinc-900">
+          <div className="flex min-w-0 flex-1 items-center h-9 border border-zinc-300 dark:border-zinc-700 rounded-md p-0.5 bg-zinc-100 dark:bg-zinc-900 sm:flex-none">
             <button
               type="button"
               onClick={() => handleFontChange('sans')}
               title="Font Sans-serif (Inter)"
-              className={`h-full px-2.5 flex items-center justify-center rounded text-xs font-sans font-bold transition-colors ${
+              className={`h-full flex-1 px-1.5 sm:px-2.5 flex items-center justify-center rounded text-xs font-sans font-bold transition-colors ${
                 settings.editorFont === 'sans'
                   ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-xs'
                   : 'text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white'
@@ -139,7 +139,7 @@ export default function Navbar({
               type="button"
               onClick={() => handleFontChange('serif')}
               title="Font Academic Serif"
-              className={`h-full px-2.5 flex items-center justify-center rounded text-xs font-serif font-bold transition-colors ${
+              className={`h-full flex-1 px-1.5 sm:px-2.5 flex items-center justify-center rounded text-xs font-serif font-bold transition-colors ${
                 settings.editorFont === 'serif'
                   ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-xs'
                   : 'text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white'
@@ -151,7 +151,7 @@ export default function Navbar({
               type="button"
               onClick={() => handleFontChange('exam')}
               title="Font Exam Arial (BC/IDP)"
-              className={`h-full px-2.5 flex items-center justify-center rounded text-xs font-exam font-bold transition-colors ${
+              className={`h-full flex-1 px-1.5 sm:px-2.5 flex items-center justify-center rounded text-xs font-exam font-bold transition-colors ${
                 settings.editorFont === 'exam'
                   ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-xs'
                   : 'text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white'
@@ -188,7 +188,7 @@ export default function Navbar({
             type="button"
             onClick={toggleSound}
             title={settings.soundEnabled ? 'Âm thanh: Đang BẬT (Bấm để tắt)' : 'Âm thanh: Đang TẮT (Bấm để bật)'}
-            className="h-9 w-9 flex items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 hover:border-zinc-600 transition-colors shadow-xs"
+            className="mobile-hide-sound h-9 w-9 shrink-0 flex items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 hover:border-zinc-600 transition-colors shadow-xs"
           >
             {settings.soundEnabled ? (
               <SpeakerHigh weight="bold" size={17} className="text-emerald-600 dark:text-emerald-400" />

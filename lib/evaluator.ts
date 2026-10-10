@@ -112,6 +112,11 @@ export function computeTextStats(text: string, timeSpentSeconds: number): TextSt
   };
 }
 
+function findSourceText(essay: string, phrase: string): string | null {
+  const index = essay.toLowerCase().indexOf(phrase.toLowerCase());
+  return index === -1 ? null : essay.slice(index, index + phrase.length);
+}
+
 export function generateLocalEvaluation(essay: string, topic: Topic, timeSpentSeconds: number): EvaluationResult {
   const stats = computeTextStats(essay, timeSpentSeconds);
   const words = essay.split(/\s+/).filter(Boolean);
@@ -153,12 +158,11 @@ export function generateLocalEvaluation(essay: string, topic: Topic, timeSpentSe
   const annotations: InlineAnnotation[] = [];
 
   // 1. Check for common grammar slips
-  const lower = essay.toLowerCase();
-  
-  if (lower.includes('a lot of')) {
+  const aLotOf = findSourceText(essay, 'a lot of');
+  if (aLotOf) {
     annotations.push({
       id: 'err-1',
-      originalText: 'a lot of',
+      originalText: aLotOf,
       errorType: 'vocabulary',
       categoryName: 'Informal Diction',
       explanation: "'a lot of' is conversational. Academic writing favors quantified or formal adjectives.",
@@ -167,10 +171,11 @@ export function generateLocalEvaluation(essay: string, topic: Topic, timeSpentSe
     });
   }
 
-  if (lower.includes('in my opinion, i think')) {
+  const redundantOpinion = findSourceText(essay, 'in my opinion, i think');
+  if (redundantOpinion) {
     annotations.push({
       id: 'err-2',
-      originalText: 'in my opinion, i think',
+      originalText: redundantOpinion,
       errorType: 'coherence',
       categoryName: 'Redundancy / Tautology',
       explanation: "Using 'In my opinion' and 'I think' together is tautological (repeating the same meaning).",
@@ -179,10 +184,11 @@ export function generateLocalEvaluation(essay: string, topic: Topic, timeSpentSe
     });
   }
 
-  if (lower.includes('more and more')) {
+  const moreAndMore = findSourceText(essay, 'more and more');
+  if (moreAndMore) {
     annotations.push({
       id: 'err-3',
-      originalText: 'more and more',
+      originalText: moreAndMore,
       errorType: 'vocabulary',
       categoryName: 'Overused Cliché',
       explanation: "'more and more' is repetitive and lacks academic precision.",
@@ -191,63 +197,19 @@ export function generateLocalEvaluation(essay: string, topic: Topic, timeSpentSe
     });
   }
 
-  if (lower.includes('good') || lower.includes('bad')) {
+  const simpleAdjective = essay.match(/\b(good|bad)\b/i)?.[0];
+  if (simpleAdjective) {
+    const isGood = simpleAdjective.toLowerCase() === 'good';
     annotations.push({
       id: 'err-4',
-      originalText: lower.includes('good') ? 'good' : 'bad',
+      originalText: simpleAdjective,
       errorType: 'vocabulary',
       categoryName: 'Low-Band Lexicon (A2/B1)',
       explanation: "Vague evaluation terms should be substituted with context-specific adjectives.",
-      suggestedFix: lower.includes('good') ? 'beneficial / advantageous' : 'detrimental / adverse',
-      band8Alternative: lower.includes('good') ? 'exceedingly advantageous' : 'profoundly detrimental'
+      suggestedFix: isGood ? 'beneficial / advantageous' : 'detrimental / adverse',
+      band8Alternative: isGood ? 'exceedingly advantageous' : 'profoundly detrimental'
     });
   }
-
-  // Always ensure at least 3-4 structured annotations for demonstration
-  if (annotations.length === 0) {
-    // Pick the first sentence fragment
-    const firstSentence = essay.split(/[.!?]/)[0] || essay.substring(0, 40);
-    annotations.push({
-      id: 'ann-demo-1',
-      originalText: firstSentence.substring(0, Math.min(30, firstSentence.length)),
-      errorType: 'grammar',
-      categoryName: 'Sentence Architecture',
-      explanation: 'Consider utilizing an introductory adverbial clause or inversion to establish formal academic authority right from the onset.',
-      suggestedFix: 'It is widely contended that ' + firstSentence.toLowerCase(),
-      band8Alternative: 'While it is often asserted that ..., empirical evidence indicates that ...'
-    });
-
-    annotations.push({
-      id: 'ann-demo-2',
-      originalText: 'important',
-      errorType: 'vocabulary',
-      categoryName: 'Lexical Diversity',
-      explanation: "The adjective 'important' is frequent in Band 6.0 scripts. Elevate to higher register terms.",
-      suggestedFix: 'vital / crucial / pivotal',
-      band8Alternative: 'of paramount significance'
-    });
-
-    annotations.push({
-      id: 'ann-demo-3',
-      originalText: 'Furthermore',
-      errorType: 'coherence',
-      categoryName: 'Mechanical Linker',
-      explanation: "Over-reliance on sentence-initial conjuncts ('Furthermore', 'Moreover') can make discourse feel formulaic.",
-      suggestedFix: 'In addition to this factor,',
-      band8Alternative: 'Compounding this issue is the fact that'
-    });
-  }
-
-  // Add one excellence badge
-  annotations.push({
-    id: 'ann-demo-exc',
-    originalText: essay.split(/\s+/).slice(10, 15).join(' ') || 'this perspective',
-    errorType: 'excellence',
-    categoryName: 'Effective Academic Collocation',
-    explanation: 'Effective contextual usage showing good syntactic cohesion and natural English rhythm.',
-    suggestedFix: 'Well executed.',
-    band8Alternative: 'Exemplary usage.'
-  });
 
   return {
     id: 'eval-' + Date.now(),

@@ -160,13 +160,13 @@ export default function ExamWorkspace({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Pane: Topic Details & Rubric (5 Columns) */}
-        <div className="lg:col-span-5 space-y-5">
-          <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-6 sm:p-7 shadow-xs space-y-4">
+    <div className="max-w-[1680px] 2xl:max-w-[1760px] mx-auto px-4 sm:px-6 py-5 sm:py-8">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6 2xl:gap-8 items-start">
+        {/* Left Pane: Topic Details & Rubric (4 Columns) */}
+        <div className="xl:col-span-4 space-y-5">
+          <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-4 sm:p-7 shadow-xs space-y-4">
             {/* Topic Header Badges */}
-            <div className="flex items-center justify-between gap-2 pb-2 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="flex flex-col items-start gap-2 pb-2 border-b border-zinc-200 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
               <span className="inline-flex items-center px-3.5 py-1 text-xs sm:text-sm font-bold bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 rounded">
                 {topic.type.toUpperCase()}
               </span>
@@ -243,10 +243,10 @@ export default function ExamWorkspace({
           </div>
         </div>
 
-        {/* Right Pane: Exam Editor & Live Feedback Controls (7 Columns) */}
-        <div className="lg:col-span-7 space-y-5">
+        {/* Right Pane: Exam Editor & Live Feedback Controls (8 Columns) */}
+        <div className="xl:col-span-8 space-y-5">
           {/* Status Bar: Timer + Word Count */}
-          <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-4 sm:p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
+          <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {/* Timer Control */}
             <div className="flex items-center gap-2.5">
               <div
@@ -280,9 +280,9 @@ export default function ExamWorkspace({
             </div>
 
             {/* Word Count Metric */}
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="flex items-center gap-2 justify-end">
+            <div className="flex items-center justify-between gap-3 sm:justify-start sm:gap-4">
+              <div className="text-left sm:text-right min-w-0">
+                <div className="flex items-center gap-2 sm:justify-end">
                   <span
                     className={`text-2xl sm:text-3xl font-black tabular-nums ${
                       isWordCountSufficient
@@ -309,7 +309,7 @@ export default function ExamWorkspace({
               </div>
 
               {/* Quick sample loader & clear button */}
-              <div className="flex items-center gap-2 pl-3 border-l border-zinc-300 dark:border-zinc-700">
+              <div className="flex shrink-0 items-center gap-2 pl-3 border-l border-zinc-300 dark:border-zinc-700">
                 <button
                   type="button"
                   onClick={loadSampleEssay}
@@ -353,12 +353,12 @@ export default function ExamWorkspace({
               placeholder="Bắt đầu viết bài essay của bạn tại đây... (Đồng hồ sẽ tự động kích hoạt khi bạn gõ phím đầu tiên)"
               spellCheck={!settings.spellcheckLocked}
               rows={18}
-              className={`w-full p-6 sm:p-7 bg-transparent text-zinc-950 dark:text-zinc-50 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none resize-y min-h-[460px] ${getEditorFontClass()}`}
+              className={`w-full p-4 sm:p-7 bg-transparent text-zinc-950 dark:text-zinc-50 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none resize-y min-h-[360px] sm:min-h-[460px] xl:min-h-0 xl:h-[clamp(360px,calc(100vh-500px),560px)] ${getEditorFontClass()}`}
             />
 
             {/* Bottom Bar inside Textarea */}
-            <div className="px-6 py-3.5 bg-zinc-100 dark:bg-zinc-950 border-t border-zinc-300 dark:border-zinc-700 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 font-semibold">
-              <div className="flex items-center gap-2">
+            <div className="px-4 sm:px-6 py-3.5 bg-zinc-100 dark:bg-zinc-950 border-t border-zinc-300 dark:border-zinc-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 font-semibold">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span>Font: <strong className="text-zinc-950 dark:text-white">{settings.editorFont.toUpperCase()}</strong></span>
                 <span>•</span>
                 <span>Spellcheck: <strong className="text-zinc-950 dark:text-white">{settings.spellcheckLocked ? 'Đã khóa' : 'Bật'}</strong></span>

@@ -155,7 +155,7 @@ export default function Home() {
 
       {/* Discrete Academic Footer */}
       <footer className="border-t border-zinc-300 dark:border-zinc-700 py-6 text-center text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 font-semibold">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-[1680px] 2xl:max-w-[1760px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>IELTS WRITING AI EVALUATOR • CALIBRATED BAND DESCRIPTORS</span>
           <div className="flex items-center gap-3">
             <span>TASK 1 & TASK 2</span>

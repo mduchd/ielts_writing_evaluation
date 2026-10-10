@@ -151,9 +151,9 @@ export default function EvaluationView({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 py-5 sm:py-8 space-y-5 sm:space-y-6">
       {/* Top Navigation & Action */}
-      <div className="flex items-center justify-between border-b border-zinc-300 dark:border-zinc-700 pb-4">
+      <div className="flex flex-col items-start gap-3 border-b border-zinc-300 dark:border-zinc-700 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
           onClick={() => {
@@ -168,15 +168,15 @@ export default function EvaluationView({
 
 
         <div className="flex items-center gap-2">
-          <span className="text-sm sm:text-base text-zinc-900 dark:text-zinc-100 font-bold">
+          <span className="text-xs sm:text-base text-zinc-900 dark:text-zinc-100 font-bold">
             {topic.type.toUpperCase()} • <span>{result.stats.wordCount}</span> từ • <span>{Math.round(result.stats.timeSpentSeconds / 60)}</span> phút làm bài
           </span>
         </div>
       </div>
 
       {/* Main Score Overview Card */}
-      <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-6 sm:p-7 shadow-xs">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+      <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-4 sm:p-7 shadow-xs">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
           {/* Big Overall Band Display (4 Cols) */}
           <div className="md:col-span-4 border-b md:border-b-0 md:border-r border-zinc-300 dark:border-zinc-700 pb-5 md:pb-0 md:pr-6 text-center md:text-left">
             <div className="text-xs sm:text-sm uppercase tracking-wider text-zinc-800 dark:text-zinc-200 font-bold mb-1.5">
@@ -196,9 +196,9 @@ export default function EvaluationView({
 
           {/* 4 Criteria Sub-scores (8 Cols) */}
           <div className="md:col-span-8">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
               {/* Task Response */}
-              <div className="p-4 border border-sky-300 dark:border-sky-800 rounded-md bg-sky-50 dark:bg-sky-950/60">
+              <div className="p-3 sm:p-4 border border-sky-300 dark:border-sky-800 rounded-md bg-sky-50 dark:bg-sky-950/60">
                 <div className="flex items-center justify-between text-xs sm:text-sm text-sky-950 dark:text-sky-200 mb-1">
                   <span className="font-bold">Task Response</span>
                   <Target weight="bold" size={18} />
@@ -210,7 +210,7 @@ export default function EvaluationView({
               </div>
 
               {/* Coherence & Cohesion */}
-              <div className="p-4 border border-indigo-300 dark:border-indigo-800 rounded-md bg-indigo-50 dark:bg-indigo-950/60">
+              <div className="p-3 sm:p-4 border border-indigo-300 dark:border-indigo-800 rounded-md bg-indigo-50 dark:bg-indigo-950/60">
                 <div className="flex items-center justify-between text-xs sm:text-sm text-indigo-950 dark:text-indigo-200 mb-1">
                   <span className="font-bold">Coherence</span>
                   <GitFork weight="bold" size={18} />
@@ -222,7 +222,7 @@ export default function EvaluationView({
               </div>
 
               {/* Lexical Resource */}
-              <div className="p-4 border border-amber-300 dark:border-amber-800 rounded-md bg-amber-50 dark:bg-amber-950/60">
+              <div className="p-3 sm:p-4 border border-amber-300 dark:border-amber-800 rounded-md bg-amber-50 dark:bg-amber-950/60">
                 <div className="flex items-center justify-between text-xs sm:text-sm text-amber-950 dark:text-amber-200 mb-1">
                   <span className="font-bold">Lexical Res.</span>
                   <Translate weight="bold" size={18} />
@@ -234,7 +234,7 @@ export default function EvaluationView({
               </div>
 
               {/* Grammatical Range & Accuracy */}
-              <div className="p-4 border border-red-300 dark:border-red-800 rounded-md bg-red-50 dark:bg-red-950/60">
+              <div className="p-3 sm:p-4 border border-red-300 dark:border-red-800 rounded-md bg-red-50 dark:bg-red-950/60">
                 <div className="flex items-center justify-between text-xs sm:text-sm text-red-950 dark:text-red-200 mb-1">
                   <span className="font-bold">Grammar</span>
                   <WarningCircle weight="bold" size={18} />
@@ -256,7 +256,7 @@ export default function EvaluationView({
       </div>
 
       {/* Tabs Controller */}
-      <div className="flex items-center gap-1 border-b border-zinc-300 dark:border-zinc-700 text-sm sm:text-base font-bold overflow-x-auto">
+      <div className="-mx-4 px-4 flex items-center gap-1 border-b border-zinc-300 dark:border-zinc-700 text-sm sm:text-base font-bold overflow-x-auto [scrollbar-width:thin]">
         <button
           type="button"
           onClick={() => {
@@ -325,14 +325,14 @@ export default function EvaluationView({
 
       {/* Tab 1: Interactive Inline Annotated Essay */}
       {activeTab === 'inline' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-start">
           {/* Essay Area with Annotations (7 cols) */}
-          <div className="lg:col-span-7 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-6 sm:p-7 shadow-xs space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-700">
+          <div className="lg:col-span-7 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-4 sm:p-7 shadow-xs space-y-5">
+            <div className="flex flex-col items-start gap-3 pb-3 border-b border-zinc-200 dark:border-zinc-700 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
                 Bản thảo có đánh dấu lỗi & điểm sáng
               </span>
-              <div className="flex items-center gap-3 text-xs sm:text-sm font-bold">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm font-bold">
                 <span className="flex items-center gap-1.5 text-red-700 dark:text-red-400">
                   <span className="w-2.5 h-2.5 rounded-full bg-red-600" /> Ngữ pháp
                 </span>
@@ -357,9 +357,9 @@ export default function EvaluationView({
           </div>
 
           {/* Inline Inspector Card (5 cols) */}
-          <div className="lg:col-span-5 space-y-4 sticky top-20">
+          <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-20">
             {selectedAnnotation ? (
-              <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-6 shadow-xs space-y-4">
+              <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-xs space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-700">
                   <div className="flex items-center gap-2">
                     <span
@@ -436,7 +436,7 @@ export default function EvaluationView({
                 </div>
               </div>
             ) : (
-              <div className="border border-dashed border-zinc-400 dark:border-zinc-700 rounded-lg p-10 text-center text-zinc-800 dark:text-zinc-200 text-base space-y-3 bg-zinc-50/50 dark:bg-zinc-900/50">
+              <div className="border border-dashed border-zinc-400 dark:border-zinc-700 rounded-lg p-6 sm:p-10 text-center text-zinc-800 dark:text-zinc-200 text-base space-y-3 bg-zinc-50/50 dark:bg-zinc-900/50">
                 <Lightbulb weight="bold" size={40} className="mx-auto text-zinc-800 dark:text-zinc-200" />
                 <p className="font-bold text-zinc-950 dark:text-white text-lg">
                   Chọn một điểm bôi màu trên bài viết
@@ -456,9 +456,9 @@ export default function EvaluationView({
           {Object.entries(result.criteria).map(([key, criterion]) => (
             <div
               key={key}
-              className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-6 sm:p-7 shadow-xs space-y-4"
+              className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-4 sm:p-7 shadow-xs space-y-4"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-700">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-zinc-200 dark:border-zinc-700">
                 <span className="text-lg font-bold text-zinc-950 dark:text-white">
                   {criterion.label}
                 </span>
@@ -512,8 +512,8 @@ export default function EvaluationView({
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Band 7.5 Version */}
-            <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-6 sm:p-7 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-700">
+            <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-4 sm:p-7 shadow-xs space-y-4">
+              <div className="flex flex-col items-start gap-3 pb-3 border-b border-zinc-200 dark:border-zinc-700 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-lg font-bold text-zinc-950 dark:text-white flex items-center gap-2">
                   <SealCheck weight="bold" size={20} /> Phiên Bản Nâng Cấp Band 7.5
                 </span>
@@ -532,8 +532,8 @@ export default function EvaluationView({
             </div>
 
             {/* Band 8.5 Version */}
-            <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-6 sm:p-7 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-700">
+            <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-4 sm:p-7 shadow-xs space-y-4">
+              <div className="flex flex-col items-start gap-3 pb-3 border-b border-zinc-200 dark:border-zinc-700 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-lg font-bold text-zinc-950 dark:text-white flex items-center gap-2">
                   <SealCheck weight="bold" size={20} className="text-emerald-600 dark:text-emerald-400" /> Phiên Bản Chuẩn Giám Khảo Band 8.5+
                 </span>
@@ -554,7 +554,7 @@ export default function EvaluationView({
 
           {/* Key Upgrades Summary */}
           {result.sampleRewrites.keyUpgrades && result.sampleRewrites.keyUpgrades.length > 0 && (
-            <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-zinc-100 dark:bg-zinc-950 p-6 sm:p-7 space-y-3">
+            <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-zinc-100 dark:bg-zinc-950 p-4 sm:p-7 space-y-3">
               <div className="text-base font-bold uppercase tracking-wider text-zinc-950 dark:text-white">
                 Các bước chuyển đổi kỹ thuật từ bài làm lên Band 8.5:
               </div>
@@ -573,8 +573,8 @@ export default function EvaluationView({
 
       {/* Tab 4: Personal Error Vault */}
       {activeTab === 'error_vault' && (
-        <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-6 sm:p-7 shadow-xs space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-700">
+        <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-4 sm:p-7 shadow-xs space-y-5">
+          <div className="flex flex-col items-start gap-3 pb-3 border-b border-zinc-200 dark:border-zinc-700 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="text-lg font-bold text-zinc-950 dark:text-white">
                 Sổ Tay Lỗi Sai Cần Tránh Cho Bài Viết Tiếp Theo
@@ -595,7 +595,7 @@ export default function EvaluationView({
                 className="p-5 border border-zinc-300 dark:border-zinc-700 rounded-md bg-zinc-50 dark:bg-zinc-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-base"
               >
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex flex-wrap items-center gap-2.5">
                     <span
                       className={`text-xs sm:text-sm font-bold px-3 py-0.5 rounded border ${
                         getErrorTypeBadge(item.errorType).color
