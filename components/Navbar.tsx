@@ -10,6 +10,7 @@ import {
   CaretDown,
   SpeakerHigh,
   SpeakerSimpleSlash,
+  ChartLineUp,
 } from '@phosphor-icons/react';
 
 import { Topic, UserSettings } from '@/types/ielts';
@@ -22,6 +23,7 @@ interface NavbarProps {
   settings: UserSettings;
   onUpdateSettings: (newSettings: Partial<UserSettings>) => void;
   onOpenSettingsModal: () => void;
+  onOpenProgressDashboard: () => void;
   isEvaluating: boolean;
 }
 
@@ -31,6 +33,7 @@ export default function Navbar({
   settings,
   onUpdateSettings,
   onOpenSettingsModal,
+  onOpenProgressDashboard,
   isEvaluating,
 }: NavbarProps) {
   const toggleSpellcheck = () => {
@@ -195,6 +198,20 @@ export default function Navbar({
             ) : (
               <SpeakerSimpleSlash weight="bold" size={17} className="text-zinc-400 dark:text-zinc-500" />
             )}
+          </button>
+
+          {/* Settings API Modal Trigger (Icon Only) */}
+          <button
+            type="button"
+            onClick={() => {
+              audioFX.playClick();
+              onOpenProgressDashboard();
+            }}
+            title="Xem tiến độ luyện viết"
+            aria-label="Xem tiến độ luyện viết"
+            className="h-9 w-9 shrink-0 flex items-center justify-center text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white border border-zinc-300 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-900 hover:border-zinc-600 dark:hover:border-zinc-400 transition-colors shadow-xs"
+          >
+            <ChartLineUp weight="bold" size={18} />
           </button>
 
           {/* Settings API Modal Trigger (Icon Only) */}

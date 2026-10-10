@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { evaluateEssayWithAI } from '@/lib/evaluator';
+import { EvaluationProviderError, evaluateEssayWithAI } from '@/lib/evaluator';
 import { Topic } from '@/types/ielts';
 
 const MAX_ESSAY_LENGTH = 30_000;
@@ -72,8 +72,17 @@ export async function POST(req: NextRequest) {
       : process.env.OPENAI_API_KEY
         ? 'openai'
         : 'gemini';
-    const effectiveProvider = provider ?? configuredProvider;
     const clientApiKey = typeof apiKey === 'string' && apiKey.trim() ? apiKey : undefined;
+    const selectedProviderHasServerKey = provider === 'gemini'
+      ? Boolean(process.env.GEMINI_API_KEY)
+      : provider === 'openai'
+        ? Boolean(process.env.OPENAI_API_KEY)
+        : false;
+    const effectiveProvider = clientApiKey
+      ? provider ?? configuredProvider
+      : selectedProviderHasServerKey && provider
+        ? provider
+        : configuredProvider;
     const effectiveApiKey = clientApiKey ?? (
       effectiveProvider === 'openai' ? process.env.OPENAI_API_KEY : process.env.GEMINI_API_KEY
     );
@@ -93,6 +102,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
   } catch (error: unknown) {
     console.error('Error during evaluation:', error);
+    if (error instanceof EvaluationProviderError) {
+      return NextResponse.json({ error: error.message }, { status: 502 });
+    }
     return NextResponse.json({ error: 'Unable to evaluate this essay right now' }, { status: 500 });
   }
 }

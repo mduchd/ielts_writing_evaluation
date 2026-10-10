@@ -191,14 +191,14 @@ export default function SettingsModal({
               className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-md bg-zinc-50 dark:bg-zinc-950 text-zinc-950 dark:text-white font-mono text-sm sm:text-base font-semibold focus:outline-none focus:border-zinc-950 dark:focus:border-white"
             />
             <p className="mt-2 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed font-medium">
-              * Khóa API được lưu cục bộ trên trình duyệt (Local Storage) và chỉ dùng để gửi yêu cầu chấm bài của bạn. Nếu để trống, hệ thống dùng <strong>Local Heuristic Evaluator</strong> với phân tích quy tắc cơ bản; đây không thay thế phản hồi của AI hoặc giám khảo IELTS.
+              * Bản hiện tại chưa có API được cấu hình nên hệ thống hiển thị <strong>Demo analysis</strong> khi không có key. Key cá nhân, nếu dùng, được lưu trong trình duyệt và gửi tới server để gọi nhà cung cấp AI; không dùng key production trên thiết bị dùng chung.
             </p>
           </div>
 
           <div className="p-4 bg-zinc-100 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-md text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 font-medium flex items-start gap-3">
             <ShieldCheck weight="bold" size={22} className="shrink-0 text-emerald-600 mt-0.5" />
             <span>
-              Quy chuẩn chấm thi áp dụng đúng <strong>IELTS Public Band Descriptors</strong> chính thức từ British Council và IDP với cơ chế chống nâng điểm (Anti-Score Inflation).
+              Rubric được xây dựng dựa trên <strong>IELTS Public Band Descriptors</strong>. Kết quả AI là ước lượng học tập, không phải điểm chính thức từ British Council, IDP hoặc giám khảo được chứng nhận.
             </span>
           </div>
         </div>

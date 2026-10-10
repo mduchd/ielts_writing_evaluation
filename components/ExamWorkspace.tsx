@@ -41,6 +41,7 @@ export default function ExamWorkspace({
   const [hasStartedTyping, setHasStartedTyping] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const hasPlayedMilestoneRef = useRef(false);
+  const hasPlayedTimerWarningRef = useRef(false);
   const prevWordCountRef = useRef(0);
 
   // Reset timer on topic change
@@ -49,33 +50,40 @@ export default function ExamWorkspace({
     setIsTimerRunning(false);
     setHasStartedTyping(false);
     hasPlayedMilestoneRef.current = false;
-  }, [topic]);
+    hasPlayedTimerWarningRef.current = false;
+  }, [topic.id, topic.timeLimitMinutes]);
 
   // Timer Tick & Audio Alerts
   useEffect(() => {
-    if (isTimerRunning) {
-      timerRef.current = setInterval(() => {
-        setSecondsRemaining((prev) => {
-          if (prev === 300) {
-            // Exactly 5 minutes left
-            audioFX.playTimerWarning();
-          }
-          if (prev <= 1) {
-            clearInterval(timerRef.current!);
-            setIsTimerRunning(false);
-            audioFX.playTimeUp();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
+    if (!isTimerRunning || secondsRemaining <= 0) return;
+
+    // Deriving the remaining time from a deadline prevents drift after a slow
+    // render or when the browser temporarily throttles timers in a background tab.
+    const deadline = Date.now() + secondsRemaining * 1000;
+    const tick = () => {
+      setSecondsRemaining((previous) => {
+        const next = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+        if (previous > 300 && next <= 300 && !hasPlayedTimerWarningRef.current) {
+          audioFX.playTimerWarning();
+          hasPlayedTimerWarningRef.current = true;
+        }
+        if (next === 0 && previous > 0) {
+          setIsTimerRunning(false);
+          audioFX.playTimeUp();
+        }
+        return next;
+      });
+    };
+
+    tick();
+    timerRef.current = setInterval(tick, 1000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
+  // secondsRemaining deliberately is not a dependency: it is captured as the
+  // starting value for this running interval and then updated from the deadline.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTimerRunning]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -88,13 +96,15 @@ export default function ExamWorkspace({
 
   const toggleTimer = () => {
     audioFX.playClick();
-    setIsTimerRunning(!isTimerRunning);
+    if (secondsRemaining > 0) setIsTimerRunning(!isTimerRunning);
   };
 
   const resetTimer = () => {
     audioFX.playClick();
     setIsTimerRunning(false);
     setSecondsRemaining(topic.timeLimitMinutes * 60);
+    setHasStartedTyping(false);
+    hasPlayedTimerWarningRef.current = false;
   };
 
   const formatTime = (secs: number) => {
@@ -324,6 +334,11 @@ export default function ExamWorkspace({
                     onClick={() => {
                       audioFX.playClick();
                       onChangeEssayText('');
+                        setIsTimerRunning(false);
+                        setSecondsRemaining(topic.timeLimitMinutes * 60);
+                        setHasStartedTyping(false);
+                        hasPlayedMilestoneRef.current = false;
+                        hasPlayedTimerWarningRef.current = false;
                     }}
                     title="Xóa toàn bộ văn bản"
                     className="h-10 w-10 flex items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700 text-zinc-700 hover:text-red-600 dark:text-zinc-300 dark:hover:text-red-400 transition-colors shadow-xs"

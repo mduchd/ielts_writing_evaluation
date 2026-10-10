@@ -15,14 +15,19 @@ import {
   ChartLineUp,
   X,
   Lightbulb,
+  ArrowsLeftRight,
+  TrendDown,
+  TrendUp,
 } from '@phosphor-icons/react';
-import { EvaluationResult, InlineAnnotation, Topic, ErrorType } from '@/types/ielts';
+import { EvaluationResult, InlineAnnotation, Topic, ErrorType, WritingHistoryItem } from '@/types/ielts';
 import { audioFX } from '@/lib/audio';
+import { summarizeRevision } from '@/lib/revisions';
 
 interface EvaluationViewProps {
   result: EvaluationResult;
   topic: Topic;
   originalEssay: string;
+  previousAttempt: WritingHistoryItem | null;
   onRetry: () => void;
 }
 
@@ -30,11 +35,15 @@ export default function EvaluationView({
   result,
   topic,
   originalEssay,
+  previousAttempt,
   onRetry,
 }: EvaluationViewProps) {
-  const [activeTab, setActiveTab] = useState<'inline' | 'criteria' | 'rewrites' | 'error_vault'>('inline');
+  const [activeTab, setActiveTab] = useState<'inline' | 'criteria' | 'rewrites' | 'error_vault' | 'revision'>('inline');
   const [selectedAnnotation, setSelectedAnnotation] = useState<InlineAnnotation | null>(null);
   const [copiedText, setCopiedText] = useState<string | null>(null);
+  const revision = previousAttempt ? summarizeRevision(previousAttempt, result) : null;
+
+  const formatDelta = (value: number) => `${value > 0 ? '+' : ''}${value.toFixed(1)}`;
 
   useEffect(() => {
     // Play elegant academic score reveal chord upon mounting
@@ -91,67 +100,91 @@ export default function EvaluationView({
       );
     }
 
-    const paragraphs = originalEssay.split(/\n+/);
+    const annotations = [...result.inlineAnnotations]
+      .filter((ann) =>
+        ann.sourceStart >= 0 &&
+        ann.sourceEnd > ann.sourceStart &&
+        ann.sourceEnd <= originalEssay.length &&
+        originalEssay.slice(ann.sourceStart, ann.sourceEnd) === ann.originalText
+      )
+      .sort((a, b) => a.sourceStart - b.sourceStart || a.sourceEnd - b.sourceEnd);
+    const elements: React.ReactNode[] = [];
+    let cursor = 0;
+
+    annotations.forEach((ann) => {
+      // Do not render overlapping marks: the verifier should prevent them, but
+      // keeping the essay readable is safer than nesting interactive controls.
+      if (ann.sourceStart < cursor) return;
+      if (ann.sourceStart > cursor) elements.push(originalEssay.slice(cursor, ann.sourceStart));
+
+      const badge = getErrorTypeBadge(ann.errorType);
+      const isSelected = selectedAnnotation?.id === ann.id;
+      elements.push(
+        <button
+          key={`${ann.id}-${ann.sourceStart}`}
+          type="button"
+          onClick={() => {
+            audioFX.playInspect();
+            setSelectedAnnotation(ann);
+          }}
+          aria-label={`Xem giải thích: ${ann.categoryName}`}
+          className={`inline px-1.5 py-0.5 rounded cursor-pointer transition-all border font-bold ${badge.color} ${
+            isSelected
+              ? 'ring-2 ring-zinc-950 dark:ring-white shadow-sm'
+              : 'hover:brightness-95'
+          }`}
+        >
+          {ann.originalText}
+        </button>
+      );
+      cursor = ann.sourceEnd;
+    });
+
+    if (cursor < originalEssay.length) elements.push(originalEssay.slice(cursor));
 
     return (
-      <div className="space-y-6 text-base sm:text-lg leading-[1.9] text-zinc-950 dark:text-zinc-50 font-normal">
-        {paragraphs.map((paragraph, pIdx) => {
-          let elements: React.ReactNode[] = [paragraph];
-
-          result.inlineAnnotations.forEach((ann) => {
-            if (!ann.originalText || ann.originalText.trim().length === 0) return;
-
-            const newElements: React.ReactNode[] = [];
-            elements.forEach((el) => {
-              if (typeof el !== 'string') {
-                newElements.push(el);
-                return;
-              }
-
-              const index = el.indexOf(ann.originalText);
-              if (index === -1) {
-                newElements.push(el);
-              } else {
-                const before = el.substring(0, index);
-                const match = el.substring(index, index + ann.originalText.length);
-                const after = el.substring(index + ann.originalText.length);
-
-                const badge = getErrorTypeBadge(ann.errorType);
-                const isSelected = selectedAnnotation?.id === ann.id;
-
-                if (before) newElements.push(before);
-
-                newElements.push(
-                  <mark
-                    key={`${ann.id}-${index}`}
-                    onClick={() => {
-                      audioFX.playInspect();
-                      setSelectedAnnotation(ann);
-                    }}
-                    className={`inline-block px-2 py-0.5 rounded cursor-pointer transition-all border font-bold ${badge.color} ${
-                      isSelected
-                        ? 'ring-2 ring-zinc-950 dark:ring-white scale-[1.02] shadow-sm'
-                        : 'hover:brightness-95 hover:scale-[1.01]'
-                    }`}
-                  >
-                    {match}
-                  </mark>
-                );
-
-                if (after) newElements.push(after);
-              }
-            });
-            elements = newElements;
-          });
-
-          return <p key={pIdx}>{elements}</p>;
-        })}
+      <div className="whitespace-pre-wrap text-base sm:text-lg leading-[1.9] text-zinc-950 dark:text-zinc-50 font-normal">
+        {elements}
       </div>
     );
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-5 sm:py-8 space-y-5 sm:space-y-6">
+      <div
+        className={`rounded-lg border p-4 text-sm sm:text-base leading-relaxed font-medium ${
+          result.metadata.mode === 'demo'
+            ? 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100'
+            : 'border-sky-300 bg-sky-50 text-sky-950 dark:border-sky-800 dark:bg-sky-950/50 dark:text-sky-100'
+        }`}
+      >
+        <p className="font-bold">
+          {result.metadata.mode === 'demo' ? 'Kết quả Demo — độ tin cậy thấp' : 'Ước lượng AI — cần đối chiếu khi cần điểm chính thức'}
+        </p>
+        <ul className="mt-1 list-disc pl-5">
+          {result.metadata.notices.map((notice) => <li key={notice}>{notice}</li>)}
+        </ul>
+      </div>
+      {revision && (
+        <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="flex items-center gap-2 font-bold"><ArrowsLeftRight weight="bold" size={20} /> Kết quả sau khi sửa bài</p>
+              <p className="mt-1 text-sm leading-relaxed">Band {revision.previousOverallBand.toFixed(1)} → {result.overallBand.toFixed(1)} ({formatDelta(revision.overallBandDelta)}).</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                audioFX.playClick();
+                setActiveTab('revision');
+              }}
+              className="rounded-md border border-emerald-400 bg-white px-3 py-2 text-sm font-bold text-emerald-950 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-zinc-900 dark:text-emerald-100 dark:hover:bg-emerald-950"
+            >
+              Xem so sánh
+            </button>
+          </div>
+        </div>
+      )}
       {/* Top Navigation & Action */}
       <div className="flex flex-col items-start gap-3 border-b border-zinc-300 dark:border-zinc-700 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <button
@@ -320,6 +353,23 @@ export default function EvaluationView({
           <BookBookmark weight="bold" size={20} />
           <span>Sổ Tay Lỗi Sai Cần Ghi Nhớ</span>
         </button>
+        {revision && (
+          <button
+            type="button"
+            onClick={() => {
+              audioFX.playClick();
+              setActiveTab('revision');
+            }}
+            className={`px-5 py-3.5 border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'revision'
+                ? 'border-zinc-950 dark:border-white text-zinc-950 dark:text-white font-bold'
+                : 'border-transparent text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white'
+            }`}
+          >
+            <ArrowsLeftRight weight="bold" size={20} />
+            <span>So Sánh Bản Sửa</span>
+          </button>
+        )}
       </div>
 
 
@@ -618,6 +668,75 @@ export default function EvaluationView({
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'revision' && revision && previousAttempt && (
+        <div className="space-y-5">
+          <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-4 sm:p-7 shadow-xs">
+            <div className="flex items-start gap-3">
+              {revision.overallBandDelta >= 0 ? <TrendUp weight="bold" size={24} className="mt-0.5 text-emerald-600 dark:text-emerald-400" /> : <TrendDown weight="bold" size={24} className="mt-0.5 text-red-600 dark:text-red-400" />}
+              <div>
+                <h3 className="text-lg font-bold text-zinc-950 dark:text-white">Tác động của lần sửa bài</h3>
+                <p className="mt-1 text-sm sm:text-base text-zinc-800 dark:text-zinc-200">So sánh này chỉ phản ánh hai lần chấm liên tiếp cùng đề; với kết quả Demo, hãy dùng nó để theo dõi quy tắc phát hiện được thay vì xem như thay đổi band chính thức.</p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {[
+                ['Overall', revision.overallBandDelta],
+                ['TR', revision.criteriaDeltas.taskResponse],
+                ['CC', revision.criteriaDeltas.coherenceCohesion],
+                ['LR', revision.criteriaDeltas.lexicalResource],
+                ['GRA', revision.criteriaDeltas.grammaticalRangeAccuracy],
+              ].map(([label, delta]) => {
+                const value = Number(delta);
+                return (
+                  <div key={String(label)} className={`rounded-md border p-3 ${value >= 0 ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/50' : 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/50'}`}>
+                    <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200">{label}</p>
+                    <p className={`mt-1 text-2xl font-black tabular-nums ${value >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>{formatDelta(value)}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="mt-4 text-sm font-semibold text-zinc-800 dark:text-zinc-200">Số từ: {previousAttempt.result.stats.wordCount} → {result.stats.wordCount} ({revision.wordCountDelta > 0 ? '+' : ''}{revision.wordCountDelta})</p>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-md border border-emerald-300 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/50">
+                <p className="font-bold text-emerald-950 dark:text-emerald-100">Nhóm lỗi không còn xuất hiện</p>
+                {revision.resolvedErrorCategories.length > 0 ? <p className="mt-2 text-sm leading-relaxed text-emerald-950 dark:text-emerald-100">{revision.resolvedErrorCategories.join(' · ')}</p> : <p className="mt-2 text-sm text-emerald-950 dark:text-emerald-100">Chưa xác định được nhóm lỗi đã khắc phục.</p>}
+              </div>
+              <div className="rounded-md border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/50">
+                <p className="font-bold text-amber-950 dark:text-amber-100">Nhóm lỗi vẫn lặp lại</p>
+                {revision.recurringErrorCategories.length > 0 ? <p className="mt-2 text-sm leading-relaxed text-amber-950 dark:text-amber-100">{revision.recurringErrorCategories.join(' · ')}</p> : <p className="mt-2 text-sm text-amber-950 dark:text-amber-100">Không có nhóm lỗi lặp lại trong annotation hiện tại.</p>}
+              </div>
+            </div>
+          </div>
+
+          <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 p-4 sm:p-7 shadow-xs">
+            <h3 className="text-lg font-bold text-zinc-950 dark:text-white">Bản so sánh theo đoạn</h3>
+            <p className="mt-1 text-sm sm:text-base text-zinc-800 dark:text-zinc-200">Các đoạn khác nhau được tô nền để bạn tập trung vào những phần đã chỉnh sửa.</p>
+            <div className="mt-5 space-y-5">
+              {Array.from({ length: Math.max(previousAttempt.essay.split(/\n\s*\n/).length, originalEssay.split(/\n\s*\n/).length) }, (_, index) => {
+                const before = previousAttempt.essay.split(/\n\s*\n/)[index] ?? '';
+                const after = originalEssay.split(/\n\s*\n/)[index] ?? '';
+                const changed = before !== after;
+                return (
+                  <div key={index} className="grid gap-3 lg:grid-cols-2">
+                    <article className={`rounded-md border p-4 ${changed ? 'border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/30' : 'border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950'}`}>
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">Trước · Đoạn {index + 1}</p>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-950 dark:text-zinc-50">{before || '— Chưa có đoạn tương ứng —'}</p>
+                    </article>
+                    <article className={`rounded-md border p-4 ${changed ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30' : 'border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950'}`}>
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">Sau · Đoạn {index + 1}</p>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-950 dark:text-zinc-50">{after || '— Đã xóa đoạn này —'}</p>
+                    </article>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

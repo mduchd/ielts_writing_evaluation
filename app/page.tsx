@@ -5,8 +5,21 @@ import Navbar from '@/components/Navbar';
 import ExamWorkspace from '@/components/ExamWorkspace';
 import EvaluationView from '@/components/EvaluationView';
 import SettingsModal from '@/components/SettingsModal';
-import { Topic, EvaluationResult, UserSettings } from '@/types/ielts';
-import { PRESET_TOPICS } from '@/lib/topics';
+import ProgressDashboard from '@/components/ProgressDashboard';
+import { Topic, EvaluationResult, UserSettings, WritingHistoryItem } from '@/types/ielts';
+import { CUSTOM_TOPIC_TEMPLATE, PRESET_TOPICS } from '@/lib/topics';
+import { summarizeRevision } from '@/lib/revisions';
+
+const DRAFT_STORAGE_KEY = 'ielts_writing_draft_v1';
+const HISTORY_STORAGE_KEY = 'ielts_writing_history_v1';
+const MAX_HISTORY_ITEMS = 30;
+
+interface SavedDraft {
+  essayText: string;
+  topicId: string;
+  customPrompt?: string;
+  savedAt: string;
+}
 
 export default function Home() {
   const [currentTopic, setCurrentTopic] = useState<Topic>(PRESET_TOPICS[0]);
@@ -14,6 +27,10 @@ export default function Home() {
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
   const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isProgressOpen, setIsProgressOpen] = useState(false);
+  const [history, setHistory] = useState<WritingHistoryItem[]>([]);
+  const [revisionBaseline, setRevisionBaseline] = useState<WritingHistoryItem | null>(null);
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
 
   // Settings with local storage persistence
   const [settings, setSettings] = useState<UserSettings>({
@@ -47,6 +64,59 @@ export default function Home() {
     }
   }, []);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(HISTORY_STORAGE_KEY);
+      if (!saved) return;
+      const parsed: unknown = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        setHistory(parsed.filter((item): item is WritingHistoryItem =>
+          typeof item === 'object' && item !== null && 'id' in item && 'topic' in item && 'result' in item
+        ).slice(0, MAX_HISTORY_ITEMS));
+      }
+    } catch (error) {
+      console.warn('Failed to restore writing history from localStorage', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!saved) return;
+      const draft = JSON.parse(saved) as Partial<SavedDraft>;
+      if (typeof draft.essayText !== 'string' || typeof draft.topicId !== 'string') return;
+
+      const presetTopic = PRESET_TOPICS.find((topic) => topic.id === draft.topicId);
+      if (presetTopic) {
+        setCurrentTopic(presetTopic);
+      } else if (draft.topicId === CUSTOM_TOPIC_TEMPLATE.id && typeof draft.customPrompt === 'string') {
+        setCurrentTopic({ ...CUSTOM_TOPIC_TEMPLATE, prompt: draft.customPrompt });
+      }
+      setEssayText(draft.essayText);
+    } catch (error) {
+      console.warn('Failed to restore essay draft from localStorage', error);
+    } finally {
+      setHasRestoredDraft(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hasRestoredDraft) return;
+
+    const draft: SavedDraft = {
+      essayText,
+      topicId: currentTopic.id,
+      ...(currentTopic.id === CUSTOM_TOPIC_TEMPLATE.id ? { customPrompt: currentTopic.prompt } : {}),
+      savedAt: new Date().toISOString(),
+    };
+
+    try {
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    } catch (error) {
+      console.warn('Failed to save essay draft to localStorage', error);
+    }
+  }, [currentTopic, essayText, hasRestoredDraft]);
+
   const handleUpdateSettings = (newSettings: Partial<UserSettings>) => {
     if (newSettings.theme) {
       if (newSettings.theme === 'dark') {
@@ -68,8 +138,14 @@ export default function Home() {
 
 
   const handleSelectTopic = (topic: Topic) => {
+    if (topic.id === currentTopic.id) return;
+    if (essayText.trim() && !window.confirm('Đổi đề sẽ xóa bài viết hiện tại. Bạn có muốn tiếp tục?')) {
+      return;
+    }
     setCurrentTopic(topic);
+    setEssayText('');
     setEvaluationResult(null);
+    setRevisionBaseline(null);
   };
 
   const handleUpdateCustomTopic = (newPrompt: string) => {
@@ -102,7 +178,31 @@ export default function Home() {
       }
 
       const data: EvaluationResult = await response.json();
+      const previousAttempt = history.find((item) =>
+        item.topic.id === currentTopic.id && item.topic.prompt === currentTopic.prompt
+      );
+      const revision = previousAttempt ? summarizeRevision(previousAttempt, data) : undefined;
       setEvaluationResult(data);
+      setRevisionBaseline(previousAttempt ?? null);
+      setHistory((previous) => {
+        const next: WritingHistoryItem[] = [
+          {
+            id: data.id,
+            topic: currentTopic,
+            essay: essayText,
+            result: data,
+            savedAt: data.submittedAt,
+            revision,
+          },
+          ...previous.filter((item) => item.id !== data.id),
+        ].slice(0, MAX_HISTORY_ITEMS);
+        try {
+          localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next));
+        } catch (storageError) {
+          console.warn('Failed to save writing history to localStorage', storageError);
+        }
+        return next;
+      });
       // Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error: unknown) {
@@ -119,6 +219,15 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleClearHistory = () => {
+    setHistory([]);
+    try {
+      localStorage.removeItem(HISTORY_STORAGE_KEY);
+    } catch (error) {
+      console.warn('Failed to clear writing history from localStorage', error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors">
       {/* Top Navbar */}
@@ -128,6 +237,7 @@ export default function Home() {
         settings={settings}
         onUpdateSettings={handleUpdateSettings}
         onOpenSettingsModal={() => setIsSettingsOpen(true)}
+        onOpenProgressDashboard={() => setIsProgressOpen(true)}
         isEvaluating={isEvaluating}
       />
 
@@ -138,6 +248,7 @@ export default function Home() {
             result={evaluationResult}
             topic={currentTopic}
             originalEssay={essayText}
+            previousAttempt={revisionBaseline}
             onRetry={handleRetry}
           />
         ) : (
@@ -156,7 +267,7 @@ export default function Home() {
       {/* Discrete Academic Footer */}
       <footer className="border-t border-zinc-300 dark:border-zinc-700 py-6 text-center text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 font-semibold">
         <div className="max-w-[1680px] 2xl:max-w-[1760px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>IELTS WRITING AI EVALUATOR • CALIBRATED BAND DESCRIPTORS</span>
+          <span>IELTS WRITING AI EVALUATOR • RUBRIC-GROUNDED PRACTICE</span>
           <div className="flex items-center gap-3">
             <span>TASK 1 & TASK 2</span>
             <span>•</span>
@@ -171,6 +282,12 @@ export default function Home() {
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
         onSaveSettings={handleUpdateSettings}
+      />
+      <ProgressDashboard
+        isOpen={isProgressOpen}
+        history={history}
+        onClose={() => setIsProgressOpen(false)}
+        onClearHistory={handleClearHistory}
       />
     </div>
   );

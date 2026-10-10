@@ -16,6 +16,8 @@ export type ErrorType = 'grammar' | 'vocabulary' | 'coherence' | 'excellence';
 
 export interface InlineAnnotation {
   id: string;
+  sourceStart: number;
+  sourceEnd: number;
   originalText: string;
   errorType: ErrorType;
   categoryName: string;
@@ -50,6 +52,7 @@ export interface TextStats {
 
 export interface EvaluationResult {
   id: string;
+  metadata: EvaluationMetadata;
   overallBand: number;
   examinerSummary: string;
   criteria: {
@@ -62,6 +65,42 @@ export interface EvaluationResult {
   sampleRewrites: SampleRewrites;
   stats: TextStats;
   submittedAt: string;
+}
+
+export type EvaluationMode = 'demo' | 'ai';
+export type EvaluationConfidence = 'low' | 'medium' | 'high';
+
+export interface EvaluationMetadata {
+  mode: EvaluationMode;
+  confidence: EvaluationConfidence;
+  rubricVersion: string;
+  evaluatorVersion: string;
+  model?: string;
+  notices: string[];
+}
+
+export interface WritingHistoryItem {
+  id: string;
+  topic: Topic;
+  essay: string;
+  result: EvaluationResult;
+  savedAt: string;
+  revision?: RevisionSummary;
+}
+
+export interface RevisionSummary {
+  previousAttemptId: string;
+  previousOverallBand: number;
+  overallBandDelta: number;
+  wordCountDelta: number;
+  criteriaDeltas: {
+    taskResponse: number;
+    coherenceCohesion: number;
+    lexicalResource: number;
+    grammaticalRangeAccuracy: number;
+  };
+  resolvedErrorCategories: string[];
+  recurringErrorCategories: string[];
 }
 
 export interface UserSettings {
